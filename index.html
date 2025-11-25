@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Penalty Hero 2D</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- PANTALLA DE INICIO -->
+  <div id="startScreen" class="start-screen">
+    <div class="start-overlay">
+      <h1 class="start-title">Penalty Hero 2D</h1>
+      <p class="start-sub">Anota al menos 3 goles en 5 tiros para vencer a cada portero.</p>
+      <button id="btnStart" class="btn start-btn">Jugar</button>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="chip">Portero: <span id="keeperName">—</span> <small id="keeperDiff"></small></div>
+    <div class="chip">Tiro <span id="shotNum">0</span>/5</div>
+    <div class="chip">Goles totales: <span id="goals">0</span></div>
+    <div class="chip">Quiz: <span id="quizScore">0</span></div>
+    <div class="chip">Portero <span id="keeperIdx">1</span>/5</div>
+    <div class="chip">Racha: <span id="streakCount">0</span> · Habilidad: <span id="skillStatus">OFF</span></div>
+  </div>
+
+  <div class="stadium" id="stadium">
+    <div class="sky"></div>
+
+    <!-- Gradas -->
+    <div class="stands" id="stands" aria-label="gradas"></div>
+
+    <!-- Vallas / anuncios entre público y cancha -->
+    <div class="ad-strip" id="adStrip" aria-label="vallas publicitarias"></div>
+
+    <!-- Portería -->
+    <div class="goal-wrap" id="goalWrap" aria-label="portería">
+      <svg class="goal-svg" viewBox="0 0 900 600" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <defs>
+          <pattern id="net" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M0 0 L30 0 30 30 0 30 Z" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/>
+            <path d="M0 0 L30 30 M30 0 L0 30" stroke="rgba(255,255,255,.09)" stroke-width="1"/>
+          </pattern>
+          <linearGradient id="post" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stop-color="#f8fafc"/>
+            <stop offset="1" stop-color="#cbd5e1"/>
+          </linearGradient>
+        </defs>
+        <rect x="60" y="60" width="780" height="480" fill="url(#net)" />
+        <rect x="50" y="50" width="800" height="500" fill="none" stroke="url(#post)" stroke-width="18" rx="8" />
+      </svg>
+
+      <!-- Zona clicable 3x3 invisible -->
+      <div id="zones" class="zones" aria-label="Zonas de disparo">
+        <button class="zone" data-zone="0" aria-label="Zona 1"></button>
+        <button class="zone" data-zone="1" aria-label="Zona 2"></button>
+        <button class="zone" data-zone="2" aria-label="Zona 3"></button>
+        <button class="zone" data-zone="3" aria-label="Zona 4"></button>
+        <button class="zone" data-zone="4" aria-label="Zona 5"></button>
+        <button class="zone" data-zone="5" aria-label="Zona 6"></button>
+        <button class="zone" data-zone="6" aria-label="Zona 7"></button>
+        <button class="zone" data-zone="7" aria-label="Zona 8"></button>
+        <button class="zone" data-zone="8" aria-label="Zona 9"></button>
+
+        <!-- Portero -->
+        <div id="gk" class="gk" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="pitch"></div>
+
+    <!-- Primera persona: balón y zapatos -->
+    <div class="fp-wrap">
+      <div class="ball" id="ball" aria-label="Balón">
+        <svg viewBox="0 0 100 100">
+          <defs>
+            <radialGradient id="ballLight" cx="30%" cy="30%">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset="1" stop-color="#e5e7eb"/>
+            </radialGradient>
+          </defs>
+          <!-- Balón clásico blanco/negro -->
+          <circle cx="50" cy="50" r="47" fill="url(#ballLight)" stroke="#9ca3af" stroke-width="2"/>
+          <polygon points="50,24 64,33 60,49 40,49 36,33" fill="#020617"/>
+          <polygon points="28,36 38,33 42,49 33,58 22,49" fill="#020617"/>
+          <polygon points="72,36 78,49 67,58 58,49 62,33" fill="#020617"/>
+          <polygon points="33,58 42,49 50,66 43,78 27,70" fill="#020617"/>
+          <polygon points="67,58 73,70 57,78 50,66 58,49" fill="#020617"/>
+        </svg>
+      </div>
+      <div class="shoe left">
+        <div class="laces"></div>
+        <div class="stripes"></div>
+      </div>
+      <div class="shoe right">
+        <div class="laces"></div>
+        <div class="stripes"></div>
+      </div>
+    </div>
+
+    <div class="message" id="message">
+      Haz clic en el arco para apuntar. Luego bloquea <b>Potencia</b> y <b>Efecto</b> y dispara.
+      (Necesitas 3 goles en 5 tiros para avanzar)
+    </div>
+
+    <div class="controls">
+      <div class="meters glass">
+        <div class="meter">
+          <div class="meter-label">Potencia</div>
+          <div class="bar"><div id="powerFill" class="fill"></div></div>
+          <button id="lockPower" class="btn mini">Bloquear</button>
+          <span id="powerVal" class="val">—</span>
+        </div>
+        <div class="meter">
+          <div class="meter-label">Efecto (curva)</div>
+          <div class="bar"><div id="spinFill" class="fill"></div></div>
+          <button id="lockSpin" class="btn mini">Bloquear</button>
+          <span id="spinVal" class="val">—</span>
+        </div>
+        <button id="shootBtn" class="btn main" disabled>Disparar ⚽</button>
+      </div>
+      <div class="navbtns">
+        <button id="btnNextKeeper" class="btn" disabled>Siguiente Portero ▶</button>
+        <button id="btnRestart" class="btn alt">Reiniciar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Quiz -->
+  <div id="quizModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h2>Pregunta rápida</h2>
+      <p id="quizQuestion">—</p>
+      <div id="quizOptions" class="options"></div>
+      <div id="quizFeedback" class="feedback"></div>
+      <button id="quizClose" class="btn" disabled>Continuar</button>
+    </div>
+  </div>
+
+  <!-- Modal Final -->
+  <div id="finalModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h2>¡Fin del juego!</h2>
+      <p id="finalSummary"></p>
+      <div class="final-actions">
+        <button id="btnPlayAgain" class="btn">Jugar de nuevo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal GAME OVER -->
+  <div id="gameOverModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card gameover-card">
+      <h2 class="gameover-title">GAME OVER</h2>
+      <p id="gameOverText"></p>
+      <button id="btnRestartGameOver" class="btn">Reintentar</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
